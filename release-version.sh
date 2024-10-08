@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # ensure git is in the correct branch and has latest from remote.
 git checkout master
 git pull origin master
@@ -7,9 +9,9 @@ git pull origin master
 version=$(cat VERSION)
 echo "version: $version"
 
-# exist if tag alredy exists.
+# exit if tag already exists.
 if [ $(git tag -l "$version") ]; then
-  echo "tag already exists. Ensure verion number has been update in VERSION."
+  echo "tag already exists. Ensure version number has been update in VERSION."
   exit 1
 fi
 
@@ -19,10 +21,4 @@ if ! [[ "$version" =~ ^[0-9.]+$ ]]; then
   exit 1
 fi
 
-# tag current latest commit.
-echo "tagging..."
-git tag $version
-
-# push tag to trigger build.
-echo "pushing tag to trigger build..."
-git push origin $version
+docker buildx build --platform linux/amd64 -t githubexporter/github-exporter:latest -t githubexporter/github-exporter:$version --push .
